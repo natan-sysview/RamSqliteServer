@@ -8,22 +8,22 @@
 | Riesgo de 400 líneas | Alto |
 | PRs encadenados | Sí |
 | División sugerida | PR 1 → PR 2 → PR 3 → PR 4 |
-| Estrategia | ask-on-risk |
-| Cadena | pending |
+| Estrategia | auto-chain |
+| Cadena | feature-branch-chain |
 
-Decision needed before apply: Yes
+Decision needed before apply: No
 Chained PRs recommended: Yes
-Chain strategy: pending
+Chain strategy: feature-branch-chain
 400-line budget risk: High
 
 ### Unidades sugeridas
 
 | Unidad | Meta | PR | Prueba enfocada | Harness | Reversión |
 |---|---|---|---|---|---|
-| 1 | Crate, protocolo y admisión | 1 | `cargo test -p ramsqlite-server admission` | crear/listar por loopback | `server/` base |
-| 2 | SQL, transacciones y copias | 2 | `cargo test -p ramsqlite-server integration` | cliente JSON temporal | motor SQLite/copia |
-| 3 | Clientes interoperables | 3 | `dotnet test`; `pytest clients/python/tests` | C# inserta, Python lee | `clients/` |
-| 4 | Benchmarks y documentación | 4 | runner de benchmarks | tres comparadores | `benchmarks/`, `docs/` |
+| 1 | Crate, protocolo y admisión | PR 1, base: rama tracker | `cargo test -p ramsqlite-server admission` | crear/listar por loopback | `server/` base |
+| 2 | SQL, transacciones y copias | PR 2, base: rama PR 1 | `cargo test -p ramsqlite-server integration` | cliente JSON temporal | motor SQLite/copia |
+| 3 | Clientes interoperables | PR 3, base: rama PR 2 | `dotnet test`; `pytest clients/python/tests` | C# inserta, Python lee | `clients/` |
+| 4 | Benchmarks y documentación | PR 4, base: rama PR 3 | runner de benchmarks | tres comparadores | `benchmarks/`, `docs/` |
 
 ## Fase 1: Fundamentos y seguridad
 
