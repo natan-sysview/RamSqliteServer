@@ -1,0 +1,45 @@
+schema: spec-driven
+
+context: |
+  Workspace: sqliteserver (new Git repository).
+  Intended product: RamSQLite Server, a planned multiprocess coordinator for shared SQLite databases.
+  Current implementation: none; no application project or technology stack has been selected.
+  Preserve the distinction between validated facts and future design decisions.
+  Initial consumers are expected to include C#, but client protocol and bindings are not yet decided.
+  Documentation language: Spanish. All SDD artifacts, specifications, designs, and project documentation MUST be written in Spanish unless the user explicitly requests otherwise.
+
+strict_tdd: false
+
+projects: []
+
+testing:
+  strict_tdd: false
+  detected: "2026-09-03"
+  projects: []
+  note: "No project markers or workspace-level test command were discovered. Testing strategy must be selected when the implementation stack is chosen."
+
+rules:
+  documentation:
+    - Write all project documentation and SDD artifacts in Spanish unless the user explicitly requests another language.
+  proposal:
+    - Keep the initial scope focused on validating the RamSQLite Server problem and MVP.
+    - Identify assumptions, alternatives, and risks before implementation.
+  specs:
+    - Use Given/When/Then scenarios.
+    - Use RFC 2119 keywords for normative requirements.
+  design:
+    - Document selected technology, concurrency model, client protocol, and benchmark baseline with rationale.
+    - Include rollback or rejection criteria for architecture experiments.
+  tasks:
+    - Group work by phase and keep each task independently reviewable.
+  apply:
+    guidelines:
+      - Do not introduce an implementation stack until a proposal and design select one.
+    tdd: false
+    test_command: ""
+  verify:
+    test_command: ""
+    build_command: ""
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas into main specifications.

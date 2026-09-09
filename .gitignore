@@ -1,0 +1,8 @@
+# Local AI runtime state
+.atl/
+
+# Herramientas descargadas para desarrollo local
+.tools/
+
+# Sistema operativo
+.DS_Store
