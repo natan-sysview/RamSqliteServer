@@ -1,5 +1,9 @@
-use crate::config::Limits;
+use crate::{
+    config::Limits,
+    database::{Database, DatabaseError, ExecutionResult},
+};
 use serde::Serialize;
+use serde_json::Value;
 use std::{collections::HashMap, sync::Mutex};
 use thiserror::Error;
 
@@ -17,6 +21,8 @@ pub enum AdmissionError {
     Total,
     #[error("la base no existe")]
     NotFound,
+    #[error("la base no pudo iniciarse")]
+    Unavailable,
 }
 
 impl AdmissionError {
@@ -26,6 +32,24 @@ impl AdmissionError {
             Self::Duplicate => "base_duplicada",
             Self::MaximumDatabases | Self::PerDatabase | Self::Total => "capacidad",
             Self::NotFound => "base_no_existe",
+            Self::Unavailable => "base_no_disponible",
+        }
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum RegistryError {
+    #[error(transparent)]
+    Admission(#[from] AdmissionError),
+    #[error(transparent)]
+    Database(#[from] DatabaseError),
+}
+
+impl RegistryError {
+    pub fn code(&self) -> &'static str {
+        match self {
+            Self::Admission(error) => error.code(),
+            Self::Database(error) => error.code(),
         }
     }
 }
@@ -45,9 +69,14 @@ pub struct CapacitySnapshot {
     pub max_database_bytes: u64,
 }
 
+struct DatabaseEntry {
+    reservation: u64,
+    database: Database,
+}
+
 pub struct Registry {
     limits: Limits,
-    databases: Mutex<HashMap<String, u64>>,
+    databases: Mutex<HashMap<String, DatabaseEntry>>,
 }
 
 impl Registry {
@@ -73,14 +102,21 @@ impl Registry {
         if reservation > self.limits.max_database_bytes {
             return Err(AdmissionError::PerDatabase);
         }
-        let used: u64 = databases.values().sum();
+        let used: u64 = databases.values().map(|entry| entry.reservation).sum();
         if used
             .checked_add(reservation)
             .is_none_or(|total| total > self.limits.max_total_bytes)
         {
             return Err(AdmissionError::Total);
         }
-        databases.insert(name.to_owned(), reservation);
+        let database = Database::in_memory().map_err(|_| AdmissionError::Unavailable)?;
+        databases.insert(
+            name.to_owned(),
+            DatabaseEntry {
+                reservation,
+                database,
+            },
+        );
         Ok(())
     }
 
@@ -89,17 +125,47 @@ impl Registry {
             .lock()
             .expect("registro disponible")
             .remove(name)
-            .map(|_| ())
+            .map(|entry| entry.database.shutdown())
             .ok_or(AdmissionError::NotFound)
+    }
+
+    pub fn execute(
+        &self,
+        name: &str,
+        connection_id: String,
+        sql: String,
+        parameters: Vec<Value>,
+    ) -> Result<ExecutionResult, RegistryError> {
+        self.database(name)?
+            .execute(connection_id, sql, parameters)
+            .map_err(Into::into)
+    }
+
+    pub fn begin(&self, name: &str, connection_id: String) -> Result<(), RegistryError> {
+        self.database(name)?
+            .begin(connection_id)
+            .map_err(Into::into)
+    }
+
+    pub fn commit(&self, name: &str, connection_id: String) -> Result<(), RegistryError> {
+        self.database(name)?
+            .commit(connection_id)
+            .map_err(Into::into)
+    }
+
+    pub fn rollback(&self, name: &str, connection_id: String) -> Result<(), RegistryError> {
+        self.database(name)?
+            .rollback(connection_id)
+            .map_err(Into::into)
     }
 
     pub fn snapshot(&self) -> CapacitySnapshot {
         let databases = self.databases.lock().expect("registro disponible");
         let mut listed: Vec<_> = databases
             .iter()
-            .map(|(name, bytes)| DatabaseInfo {
+            .map(|(name, entry)| DatabaseInfo {
                 name: name.clone(),
-                reserved_bytes: *bytes,
+                reserved_bytes: entry.reservation,
             })
             .collect();
         listed.sort_by(|a, b| a.name.cmp(&b.name));
@@ -110,5 +176,14 @@ impl Registry {
             max_total_bytes: self.limits.max_total_bytes,
             max_database_bytes: self.limits.max_database_bytes,
         }
+    }
+
+    fn database(&self, name: &str) -> Result<Database, RegistryError> {
+        self.databases
+            .lock()
+            .expect("registro disponible")
+            .get(name)
+            .map(|entry| entry.database.clone())
+            .ok_or(AdmissionError::NotFound.into())
     }
 }

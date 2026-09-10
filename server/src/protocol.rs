@@ -17,6 +17,28 @@ pub enum Request {
         id_solicitud: String,
         base: String,
     },
+    Ejecutar {
+        id_solicitud: String,
+        base: String,
+        id_conexion: String,
+        sql: String,
+        parametros: Vec<serde_json::Value>,
+    },
+    IniciarTransaccion {
+        id_solicitud: String,
+        base: String,
+        id_conexion: String,
+    },
+    ConfirmarTransaccion {
+        id_solicitud: String,
+        base: String,
+        id_conexion: String,
+    },
+    RevertirTransaccion {
+        id_solicitud: String,
+        base: String,
+        id_conexion: String,
+    },
 }
 
 impl Request {
@@ -24,7 +46,11 @@ impl Request {
         match self {
             Self::Crear { id_solicitud, .. }
             | Self::Listar { id_solicitud }
-            | Self::Cerrar { id_solicitud, .. } => id_solicitud,
+            | Self::Cerrar { id_solicitud, .. }
+            | Self::Ejecutar { id_solicitud, .. }
+            | Self::IniciarTransaccion { id_solicitud, .. }
+            | Self::ConfirmarTransaccion { id_solicitud, .. }
+            | Self::RevertirTransaccion { id_solicitud, .. } => id_solicitud,
         }
     }
 }

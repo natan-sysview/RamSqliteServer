@@ -9,3 +9,6 @@
 
 # Artefactos de compilación Rust
 /target/
+
+# Artefactos locales de análisis estático
+/.scannerwork/

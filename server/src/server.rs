@@ -53,6 +53,34 @@ pub fn handle_connection(
                 codigo: error.code().into(),
                 mensaje: error.to_string(),
             }),
+        Request::Ejecutar {
+            base,
+            id_conexion,
+            sql,
+            parametros,
+            ..
+        } => registry
+            .execute(&base, id_conexion, sql, parametros)
+            .map(|result| json!(result))
+            .map_err(protocol_error),
+        Request::IniciarTransaccion {
+            base, id_conexion, ..
+        } => registry
+            .begin(&base, id_conexion)
+            .map(|_| json!({"base": base}))
+            .map_err(protocol_error),
+        Request::ConfirmarTransaccion {
+            base, id_conexion, ..
+        } => registry
+            .commit(&base, id_conexion)
+            .map(|_| json!({"base": base}))
+            .map_err(protocol_error),
+        Request::RevertirTransaccion {
+            base, id_conexion, ..
+        } => registry
+            .rollback(&base, id_conexion)
+            .map(|_| json!({"base": base}))
+            .map_err(protocol_error),
     };
     let response = match outcome {
         Ok(result) => Response {
@@ -67,4 +95,11 @@ pub fn handle_connection(
         },
     };
     protocol::write_frame(&mut stream, &response)
+}
+
+fn protocol_error(error: crate::registry::RegistryError) -> ProtocolError {
+    ProtocolError {
+        codigo: error.code().into(),
+        mensaje: error.to_string(),
+    }
 }
