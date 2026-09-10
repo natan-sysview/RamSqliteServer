@@ -6,3 +6,6 @@
 
 # Sistema operativo
 .DS_Store
+
+# Artefactos de compilación Rust
+/target/

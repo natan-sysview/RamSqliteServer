@@ -27,11 +27,11 @@ Chain strategy: feature-branch-chain
 
 ## Fase 1: Fundamentos y seguridad
 
-- [ ] 1.1 Crear `server/Cargo.toml` y `server/src/` con configuración loopback, raíz única, límites y protocolo JSON de longitud prefijada.
-- [ ] 1.2 Escribir RED en `server/tests/admission.rs` para nombres duplicados, máximos, cuota estimada y conservación de bases tras rechazo.
-- [ ] 1.3 Implementar registro nombrado, reserva conservadora, listado de capacidad y cierre explícito en `server/src/registry.rs`.
-- [ ] 1.4 Escribir RED en `server/tests/routes.rs` para ruta absoluta, `..` y enlace fuera de `data_root`, esperando `ruta_no_autorizada`.
-- [ ] 1.5 Implementar resolución segura de rutas relativas y rechazo de destinos no loopback en `server/src/config.rs` y `server/src/protocol.rs`.
+- [x] 1.1 Crear `server/Cargo.toml` y `server/src/` con configuración loopback, raíz única, límites y protocolo JSON de longitud prefijada.
+- [x] 1.2 Escribir RED en `server/tests/admission.rs` para nombres duplicados, máximos, cuota estimada y conservación de bases tras rechazo.
+- [x] 1.3 Implementar registro nombrado, reserva conservadora, listado de capacidad y cierre explícito en `server/src/registry.rs`.
+- [x] 1.4 Escribir RED en `server/tests/routes.rs` para ruta absoluta, `..` y enlace fuera de `data_root`, esperando `ruta_no_autorizada`.
+- [x] 1.5 Implementar resolución segura de rutas relativas y rechazo de destinos no loopback en `server/src/config.rs` y `server/src/protocol.rs`.
 
 ## Fase 2: Motor por base
 

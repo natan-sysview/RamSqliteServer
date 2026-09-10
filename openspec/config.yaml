@@ -3,20 +3,28 @@ schema: spec-driven
 context: |
   Workspace: sqliteserver (new Git repository).
   Intended product: RamSQLite Server, a planned multiprocess coordinator for shared SQLite databases.
-  Current implementation: none; no application project or technology stack has been selected.
+  Current implementation: workspace Cargo con el crate Rust `ramsqlite-server`.
   Preserve the distinction between validated facts and future design decisions.
   Initial consumers are expected to include C#, but client protocol and bindings are not yet decided.
   Documentation language: Spanish. All SDD artifacts, specifications, designs, and project documentation MUST be written in Spanish unless the user explicitly requests otherwise.
 
 strict_tdd: false
 
-projects: []
+projects:
+  - path: server
+    stack: Rust
+    test_command: cargo test -p ramsqlite-server
+    framework: cargo test
 
 testing:
   strict_tdd: false
   detected: "2026-09-03"
-  projects: []
-  note: "No project markers or workspace-level test command were discovered. Testing strategy must be selected when the implementation stack is chosen."
+  projects:
+    - path: server
+      stack: Rust
+      test_command: cargo test -p ramsqlite-server
+      framework: cargo test
+  note: "El crate Rust ya dispone de pruebas unitarias e integración; el modo TDD estricto permanece desactivado."
 
 rules:
   documentation:
@@ -36,10 +44,10 @@ rules:
     guidelines:
       - Do not introduce an implementation stack until a proposal and design select one.
     tdd: false
-    test_command: ""
+    test_command: "cargo test -p ramsqlite-server"
   verify:
-    test_command: ""
-    build_command: ""
+    test_command: "cargo test -p ramsqlite-server"
+    build_command: "cargo build -p ramsqlite-server"
     coverage_threshold: 0
   archive:
     - Warn before merging destructive deltas into main specifications.
