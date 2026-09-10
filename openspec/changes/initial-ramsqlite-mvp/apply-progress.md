@@ -5,7 +5,7 @@
 **Modo:** Standard (`strict_tdd: false`)  
 **Estrategia:** `feature-branch-chain`  
 **Unidad actual:** PR 4 — comparadores reproducibles
-**Progreso:** 14 de 16 tareas completadas
+**Progreso:** 16 de 16 tareas completadas
 
 ## Tareas completadas
 
@@ -23,6 +23,8 @@
 - [x] 3.2 Cliente Python TCP local, errores tipados y prueba de humo `pytest` contra el binario real del servidor.
 - [x] 3.3 Prueba E2E de procesos C# y Python sobre la misma base y bases aisladas; workflow CI para macOS, Linux y Windows.
 - [x] 4.1 Cargas versionadas y runner multiproceso para comparar RamSQLite, SQLite `:memory:` y SQLite con WAL.
+- [x] 4.2 Captura reproducible v1 con entorno, límites, rendimiento, errores, latencia aproximada y decisión explícita de pivotar.
+- [x] 4.3 Contrato local en español: frames, operaciones, parámetros, errores, rutas, un escritor y límites MVP.
 
 ## Evidencia RED exigida por las tareas
 
@@ -80,6 +82,15 @@ La subunidad `sqlite-backup-persistence` añade 426 líneas y elimina 27 respect
 
 Ninguna desviación funcional. El protocolo expone valores de parámetros como valores JSON seguros (nulo, booleano, número y texto); arreglos y objetos devuelven `parametros` sin interpolarse en SQL. Las copias Backup API, carga y sincronización se implementaron en las tareas 2.3–2.4. La sincronización solo ocurre por solicitud explícita y no incluye migración parcial de tablas. El binario admite `RAMSQLITE_LISTEN` y `RAMSQLITE_DATA_ROOT` para las pruebas de proceso real; sin esas variables conserva `127.0.0.1:7432` y `./data`.
 
+## PR 4 — resultados y contrato
+
+| Evidencia | Resultado exacto |
+|---|---|
+| Prueba enfocada | `clients/python/.venv/bin/python -m pytest benchmarks/tests`: exit 0, 2 aprobadas, 0 fallidas. |
+| Harness de ejecución | `clients/python/.venv/bin/python benchmarks/run.py --results /tmp/ramsqlite-v1-results.json`: exit 0; RamSQLite, SQLite `:memory:` y WAL completaron 120 operaciones cada uno sin errores. |
+| Documentación | `benchmarks/resultados-v1.md` fija carga, límites, entorno, métricas y decisión de pivotar; `docs/protocolo-local.md` documenta el contrato real del MVP. |
+| Reversión | Revertir `benchmarks/resultados-v1.md`, `docs/protocolo-local.md` y las marcas 4.2–4.3 de estos artefactos; no modifica servidor, clientes ni runner. |
+
 ## Pendiente
 
-Tareas 4.2–4.3.
+No quedan tareas de implementación del cambio. La siguiente etapa es verificación SDD independiente.

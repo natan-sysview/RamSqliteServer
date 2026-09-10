@@ -9,6 +9,8 @@ cargo build -p ramsqlite-server
 clients/python/.venv/bin/python benchmarks/run.py --results /tmp/ramsqlite-v1.json
 ```
 
-Los resultados no se versionan: la tarea 4.2 registrará el entorno y una
-conclusión. La medición de `:memory:` usa una base privada por proceso porque
-SQLite directo no comparte una conexión en memoria entre procesos.
+El JSON de cada ejecución no se versiona porque sus tiempos dependen de la
+máquina. La [captura reproducible v1](resultados-v1.md) registra el entorno,
+las métricas, sus límites y la decisión actual. La medición de `:memory:` usa
+una base privada por proceso porque SQLite directo no comparte una conexión en
+memoria entre procesos.
