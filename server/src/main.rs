@@ -1,8 +1,14 @@
 use ramsqlite_server::{config::Config, registry::Registry, server};
-use std::{net::TcpListener, sync::Arc};
+use std::{env, net::TcpListener, sync::Arc};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let config = Config::local(std::env::current_dir()?.join("data"));
+    let data_root = env::var_os("RAMSQLITE_DATA_ROOT")
+        .map(Into::into)
+        .unwrap_or(std::env::current_dir()?.join("data"));
+    let mut config = Config::local(data_root);
+    if let Ok(listen) = env::var("RAMSQLITE_LISTEN") {
+        config.listen = listen.parse()?;
+    }
     config.validate()?;
     std::fs::create_dir_all(&config.data_root)?;
     let listener = TcpListener::bind(config.listen)?;

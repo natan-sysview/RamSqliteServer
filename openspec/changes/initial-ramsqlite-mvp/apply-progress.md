@@ -5,7 +5,7 @@
 **Modo:** Standard (`strict_tdd: false`)  
 **Estrategia:** `feature-branch-chain`  
 **Unidad actual:** PR 2 — motor SQL en RAM
-**Progreso:** 9 de 16 tareas completadas
+**Progreso:** 10 de 16 tareas completadas
 
 ## Tareas completadas
 
@@ -18,6 +18,7 @@
 - [x] 2.2 Trabajador FIFO acotado, SQLite `:memory:`, SQL parametrizado, transacciones y errores tipados.
 - [x] 2.3 Pruebas de integración TCP para archivo SQLite inválido, fallo de sincronización y solicitud parcial no compatible.
 - [x] 2.4 Carga SQLite y sincronización completa explícita mediante SQLite Backup API, sin persistencia automática.
+- [x] 2.5 Receptor TCP ejecutado como proceso real; dos clientes en procesos independientes usan dos bases nombradas sin mezclar datos.
 
 ## Evidencia RED exigida por las tareas
 
@@ -44,6 +45,10 @@
 | PR 2 — copias SQLite | Harness de ejecución | `cargo test -p ramsqlite-server --test persistence`: exit 0, 4 aprobadas, 0 fallidas; cada escenario abre TCP loopback real y verifica carga, sincronización o conservación de RAM. |
 | PR 2 — copias SQLite | Puertas de calidad | `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace` y `git diff --check`: exit 0; 17 pruebas de integración aprobadas, 0 fallidas. |
 | PR 2 — copias SQLite | Reversión | Revertir `server/Cargo.toml`, `server/src/backup.rs`, `server/src/database.rs`, `server/src/lib.rs`, `server/src/main.rs`, `server/src/protocol.rs`, `server/src/registry.rs`, `server/src/server.rs` y `server/tests/persistence.rs`; elimina carga/sincronización sin afectar el motor SQL ya existente. |
+| PR 2 — ciclo multiproceso | Prueba enfocada | `cargo test -p ramsqlite-server --test multiprocess_runtime`: exit 0, 2 aprobadas, 0 fallidas. |
+| PR 2 — ciclo multiproceso | Harness de ejecución | `cargo test -p ramsqlite-server --test multiprocess_runtime`: exit 0; inicia `ramsqlite-server` como proceso hijo con raíz temporal y loopback, luego inicia dos procesos cliente que crean, escriben y verifican `ventas` e `inventario` sin mezclar filas. |
+| PR 2 — ciclo multiproceso | Puertas de calidad | `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace` y `git diff --check`: exit 0; 19 pruebas de integración aprobadas, 0 fallidas. |
+| PR 2 — ciclo multiproceso | Reversión | Revertir `server/src/main.rs` y `server/tests/multiprocess_runtime.rs`; elimina la configuración de prueba por entorno y el harness de procesos sin modificar el motor SQLite, protocolo ni persistencia. |
 
 ## Límite de revisión
 
@@ -53,8 +58,8 @@ La subunidad `sqlite-backup-persistence` añade 426 líneas y elimina 27 respect
 
 ## Desviaciones
 
-Ninguna desviación funcional. El protocolo expone valores de parámetros como valores JSON seguros (nulo, booleano, número y texto); arreglos y objetos devuelven `parametros` sin interpolarse en SQL. Las copias Backup API, carga y sincronización se implementaron en las tareas 2.3–2.4. La sincronización solo ocurre por solicitud explícita y no incluye migración parcial de tablas.
+Ninguna desviación funcional. El protocolo expone valores de parámetros como valores JSON seguros (nulo, booleano, número y texto); arreglos y objetos devuelven `parametros` sin interpolarse en SQL. Las copias Backup API, carga y sincronización se implementaron en las tareas 2.3–2.4. La sincronización solo ocurre por solicitud explícita y no incluye migración parcial de tablas. El binario admite `RAMSQLITE_LISTEN` y `RAMSQLITE_DATA_ROOT` para las pruebas de proceso real; sin esas variables conserva `127.0.0.1:7432` y `./data`.
 
 ## Pendiente
 
-Tareas 2.5–4.3.
+Tareas 3.1–4.3.
