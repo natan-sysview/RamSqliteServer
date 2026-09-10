@@ -53,6 +53,23 @@ pub fn handle_connection(
                 codigo: error.code().into(),
                 mensaje: error.to_string(),
             }),
+        Request::Cargar {
+            base,
+            ruta,
+            bytes_estimados,
+            ..
+        } => registry
+            .load(&base, ruta, bytes_estimados)
+            .map(|_| json!({"base": base}))
+            .map_err(protocol_error),
+        Request::Sincronizar { base, ruta, .. } => registry
+            .sync(&base, ruta)
+            .map(|_| json!({"base": base}))
+            .map_err(protocol_error),
+        Request::SincronizarParcial { base, .. } => registry
+            .reject_partial_sync(&base)
+            .map(|_| json!({"base": base}))
+            .map_err(protocol_error),
         Request::Ejecutar {
             base,
             id_conexion,

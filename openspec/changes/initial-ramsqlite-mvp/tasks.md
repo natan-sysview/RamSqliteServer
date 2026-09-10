@@ -37,8 +37,8 @@ Chain strategy: feature-branch-chain
 
 - [x] 2.1 Escribir RED en `server/tests/sql.rs` para parámetros incompatibles, SQL inválido, aislamiento por base y conflicto de escritor sin corrupción.
 - [x] 2.2 Implementar trabajador FIFO acotado, conexión SQLite en RAM, SQL parametrizado y errores tipados en `server/src/database.rs`.
-- [ ] 2.3 Escribir RED en `server/tests/persistence.rs` para archivo inválido, fallo de guardado y persistencia parcial no compatible.
-- [ ] 2.4 Implementar carga y sincronización completa con Backup API, preservando RAM ante fallos, en `server/src/backup.rs`.
+- [x] 2.3 Escribir RED en `server/tests/persistence.rs` para archivo inválido, fallo de guardado y persistencia parcial no compatible.
+- [x] 2.4 Implementar carga y sincronización completa con Backup API, preservando RAM ante fallos, en `server/src/backup.rs`.
 - [ ] 2.5 Integrar receptor TCP y ciclo de conexión/transacción en `server/src/main.rs`; probar dos procesos y dos bases.
 
 ## Fase 3: Clientes y portabilidad

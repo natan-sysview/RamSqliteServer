@@ -8,7 +8,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let listener = TcpListener::bind(config.listen)?;
     server::serve(
         listener,
-        Arc::new(Registry::new(config.limits.clone())),
+        Arc::new(Registry::with_data_root(
+            config.limits.clone(),
+            config.data_root.clone(),
+        )),
         config.limits.max_frame_bytes,
     )?;
     Ok(())

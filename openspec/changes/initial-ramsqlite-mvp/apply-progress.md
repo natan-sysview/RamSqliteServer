@@ -5,7 +5,7 @@
 **Modo:** Standard (`strict_tdd: false`)  
 **Estrategia:** `feature-branch-chain`  
 **Unidad actual:** PR 2 — motor SQL en RAM
-**Progreso:** 7 de 16 tareas completadas
+**Progreso:** 9 de 16 tareas completadas
 
 ## Tareas completadas
 
@@ -16,6 +16,8 @@
 - [x] 1.5 Resolución segura de rutas y rechazo de conexiones no loopback.
 - [x] 2.1 Pruebas de integración TCP para parámetros incompatibles, SQL inválido, aislamiento por base y conflicto de escritor sin corrupción.
 - [x] 2.2 Trabajador FIFO acotado, SQLite `:memory:`, SQL parametrizado, transacciones y errores tipados.
+- [x] 2.3 Pruebas de integración TCP para archivo SQLite inválido, fallo de sincronización y solicitud parcial no compatible.
+- [x] 2.4 Carga SQLite y sincronización completa explícita mediante SQLite Backup API, sin persistencia automática.
 
 ## Evidencia RED exigida por las tareas
 
@@ -24,6 +26,7 @@
 | 1.2 | `cargo test -p ramsqlite-server --test admission` | Exit 101: `registry` aún no existía; las pruebas no podían compilar antes de la implementación. |
 | 1.4 | `cargo test -p ramsqlite-server --test routes` | Exit 101: `ConfigError` y `resolve_existing_path` aún no existían. |
 | 2.1 | `cargo test -p ramsqlite-server --test sql` | Exit 101: las variantes `Ejecutar`, `IniciarTransaccion` y `RevertirTransaccion` aún no existían en el protocolo. |
+| 2.3 | `cargo test -p ramsqlite-server --test persistence` | Exit 101: `Registry::with_data_root` y las operaciones `Cargar`, `Sincronizar` y `SincronizarParcial` aún no existían. |
 
 ## Evidencia de unidades de trabajo
 
@@ -37,15 +40,21 @@
 | PR 2 | Harness de ejecución | `cargo test -p ramsqlite-server --test sql`: exit 0, 4 aprobadas, 0 fallidas; cada caso abre TCP loopback real, envía JSON con longitud prefijada y verifica respuestas del trabajador SQLite. |
 | PR 2 | Puertas de calidad | `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings` y `cargo test --workspace`: exit 0; 13 pruebas de integración aprobadas, 0 fallidas. |
 | PR 2 | Reversión | Revertir `Cargo.lock`, `server/Cargo.toml`, `server/src/database.rs`, `server/src/lib.rs`, `server/src/protocol.rs`, `server/src/registry.rs`, `server/src/server.rs` y `server/tests/sql.rs`; restaura la base de admisión de PR 1 sin tocar propuesta, especificaciones ni diseño. |
+| PR 2 — copias SQLite | Prueba enfocada | `cargo test -p ramsqlite-server --test persistence`: exit 0, 4 aprobadas, 0 fallidas. |
+| PR 2 — copias SQLite | Harness de ejecución | `cargo test -p ramsqlite-server --test persistence`: exit 0, 4 aprobadas, 0 fallidas; cada escenario abre TCP loopback real y verifica carga, sincronización o conservación de RAM. |
+| PR 2 — copias SQLite | Puertas de calidad | `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace` y `git diff --check`: exit 0; 17 pruebas de integración aprobadas, 0 fallidas. |
+| PR 2 — copias SQLite | Reversión | Revertir `server/Cargo.toml`, `server/src/backup.rs`, `server/src/database.rs`, `server/src/lib.rs`, `server/src/main.rs`, `server/src/protocol.rs`, `server/src/registry.rs`, `server/src/server.rs` y `server/tests/persistence.rs`; elimina carga/sincronización sin afectar el motor SQL ya existente. |
 
 ## Límite de revisión
 
 La unidad PR 2 pertenece a `feat/initial-ramsqlite-mvp-02-sql-engine` y parte de la rama de fundación PR 1. La implementación cohesiva supera el máximo de 400 líneas: añade el trabajador propietario, el contrato de SQL/transacciones, la integración del registro/receptor, la dependencia SQLite y cuatro pruebas TCP. Se requiere `size:exception`; no se comprimieron ni eliminaron pruebas para reducir artificialmente el cambio.
 
+La subunidad `sqlite-backup-persistence` añade 426 líneas y elimina 27 respecto de `0cc4ea8`, sobre el presupuesto de 400. El excedente es coherente: incorpora cuatro escenarios TCP de persistencia, el módulo Backup API y el contrato de tres operaciones; no se redujo artificialmente.
+
 ## Desviaciones
 
-Ninguna desviación funcional. El protocolo expone valores de parámetros como valores JSON seguros (nulo, booleano, número y texto); arreglos y objetos devuelven `parametros` sin interpolarse en SQL. Las copias Backup API, carga y sincronización permanecen para las tareas 2.3–2.4.
+Ninguna desviación funcional. El protocolo expone valores de parámetros como valores JSON seguros (nulo, booleano, número y texto); arreglos y objetos devuelven `parametros` sin interpolarse en SQL. Las copias Backup API, carga y sincronización se implementaron en las tareas 2.3–2.4. La sincronización solo ocurre por solicitud explícita y no incluye migración parcial de tablas.
 
 ## Pendiente
 
-Tareas 2.3–4.3.
+Tareas 2.5–4.3.

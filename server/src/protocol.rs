@@ -17,6 +17,23 @@ pub enum Request {
         id_solicitud: String,
         base: String,
     },
+    Cargar {
+        id_solicitud: String,
+        base: String,
+        ruta: String,
+        bytes_estimados: Option<u64>,
+    },
+    Sincronizar {
+        id_solicitud: String,
+        base: String,
+        ruta: String,
+    },
+    SincronizarParcial {
+        id_solicitud: String,
+        base: String,
+        ruta: String,
+        tablas: Vec<String>,
+    },
     Ejecutar {
         id_solicitud: String,
         base: String,
@@ -47,6 +64,9 @@ impl Request {
             Self::Crear { id_solicitud, .. }
             | Self::Listar { id_solicitud }
             | Self::Cerrar { id_solicitud, .. }
+            | Self::Cargar { id_solicitud, .. }
+            | Self::Sincronizar { id_solicitud, .. }
+            | Self::SincronizarParcial { id_solicitud, .. }
             | Self::Ejecutar { id_solicitud, .. }
             | Self::IniciarTransaccion { id_solicitud, .. }
             | Self::ConfirmarTransaccion { id_solicitud, .. }

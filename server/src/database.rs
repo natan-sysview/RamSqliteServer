@@ -1,10 +1,14 @@
+use crate::backup;
 use rusqlite::{
     Connection,
     types::{Value, ValueRef},
 };
 use serde::Serialize;
 use serde_json::{Map, Value as JsonValue, json};
-use std::sync::mpsc::{self, SyncSender};
+use std::{
+    path::{Path, PathBuf},
+    sync::mpsc::{self, SyncSender},
+};
 use thiserror::Error;
 
 const MAX_PENDING_REQUESTS: usize = 32;
@@ -19,6 +23,10 @@ pub enum DatabaseError {
     Sql,
     #[error("la transacción no puede continuar")]
     Transaction,
+    #[error("no se pudo cargar el archivo SQLite")]
+    Load,
+    #[error("no se pudo guardar la copia SQLite")]
+    Persistence,
     #[error("la base no está disponible")]
     Unavailable,
 }
@@ -30,6 +38,8 @@ impl DatabaseError {
             Self::Parameters => "parametros",
             Self::Sql => "sql",
             Self::Transaction => "transaccion",
+            Self::Load => "carga",
+            Self::Persistence => "persistencia",
             Self::Unavailable => "base_no_disponible",
         }
     }
@@ -65,20 +75,44 @@ enum Command {
         connection_id: String,
         response: mpsc::Sender<Result<(), DatabaseError>>,
     },
+    Sync {
+        destination: PathBuf,
+        response: mpsc::Sender<Result<(), DatabaseError>>,
+    },
     Shutdown,
 }
 
 impl Database {
     pub fn in_memory() -> Result<Self, DatabaseError> {
+        Self::start(|| Connection::open_in_memory().map_err(|_| DatabaseError::Unavailable))
+    }
+
+    pub fn from_path(path: &Path) -> Result<Self, DatabaseError> {
+        let path = path.to_path_buf();
+        Self::start(move || backup::load_into_memory(&path).map_err(|_| DatabaseError::Load))
+    }
+
+    pub fn sync(&self, destination: PathBuf) -> Result<(), DatabaseError> {
+        let (response, receiver) = mpsc::channel();
+        self.send(Command::Sync {
+            destination,
+            response,
+        })?;
+        receiver.recv().map_err(|_| DatabaseError::Unavailable)?
+    }
+
+    fn start(
+        open: impl FnOnce() -> Result<Connection, DatabaseError> + Send + 'static,
+    ) -> Result<Self, DatabaseError> {
         let (sender, receiver) = mpsc::sync_channel(MAX_PENDING_REQUESTS);
         let (ready_sender, ready_receiver) = mpsc::sync_channel(1);
-        std::thread::spawn(move || match Connection::open_in_memory() {
+        std::thread::spawn(move || match open() {
             Ok(connection) => {
                 let _ = ready_sender.send(Ok(()));
                 run_worker(connection, receiver);
             }
-            Err(_) => {
-                let _ = ready_sender.send(Err(DatabaseError::Unavailable));
+            Err(error) => {
+                let _ = ready_sender.send(Err(error));
             }
         });
         ready_receiver
@@ -178,6 +212,12 @@ fn run_worker(connection: Connection, receiver: mpsc::Receiver<Command>) {
             } => {
                 let _ = response.send(worker.finish(connection_id, "ROLLBACK"));
             }
+            Command::Sync {
+                destination,
+                response,
+            } => {
+                let _ = response.send(worker.sync(&destination));
+            }
             Command::Shutdown => break,
         }
     }
@@ -271,6 +311,14 @@ impl Worker {
                 filas_afectadas: affected,
             })
         }
+    }
+
+    fn sync(&mut self, destination: &Path) -> Result<(), DatabaseError> {
+        if self.writer.is_some() {
+            return Err(DatabaseError::Persistence);
+        }
+        backup::save_from_memory(&self.connection, destination)
+            .map_err(|_| DatabaseError::Persistence)
     }
 
     fn require_connection(&self, connection_id: &str) -> Result<(), DatabaseError> {

@@ -1,10 +1,14 @@
 use crate::{
-    config::Limits,
+    config::{ConfigError, Limits, resolve_destination_path, resolve_existing_path},
     database::{Database, DatabaseError, ExecutionResult},
 };
 use serde::Serialize;
 use serde_json::Value;
-use std::{collections::HashMap, sync::Mutex};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    sync::Mutex,
+};
 use thiserror::Error;
 
 #[derive(Debug, Error, PartialEq, Eq)]
@@ -42,6 +46,8 @@ pub enum RegistryError {
     #[error(transparent)]
     Admission(#[from] AdmissionError),
     #[error(transparent)]
+    Config(#[from] ConfigError),
+    #[error(transparent)]
     Database(#[from] DatabaseError),
 }
 
@@ -49,6 +55,7 @@ impl RegistryError {
     pub fn code(&self) -> &'static str {
         match self {
             Self::Admission(error) => error.code(),
+            Self::Config(error) => error.code(),
             Self::Database(error) => error.code(),
         }
     }
@@ -76,39 +83,30 @@ struct DatabaseEntry {
 
 pub struct Registry {
     limits: Limits,
+    data_root: PathBuf,
     databases: Mutex<HashMap<String, DatabaseEntry>>,
 }
 
 impl Registry {
     pub fn new(limits: Limits) -> Self {
+        Self::with_data_root(
+            limits,
+            std::env::current_dir().expect("directorio de trabajo disponible"),
+        )
+    }
+
+    pub fn with_data_root(limits: Limits, data_root: PathBuf) -> Self {
         Self {
             limits,
+            data_root,
             databases: Mutex::new(HashMap::new()),
         }
     }
 
     pub fn create(&self, name: &str, estimated_bytes: Option<u64>) -> Result<(), AdmissionError> {
-        if name.trim().is_empty() {
-            return Err(AdmissionError::EmptyName);
-        }
         let reservation = estimated_bytes.unwrap_or(self.limits.new_database_reservation_bytes);
         let mut databases = self.databases.lock().expect("registro disponible");
-        if databases.contains_key(name) {
-            return Err(AdmissionError::Duplicate);
-        }
-        if databases.len() >= self.limits.max_databases {
-            return Err(AdmissionError::MaximumDatabases);
-        }
-        if reservation > self.limits.max_database_bytes {
-            return Err(AdmissionError::PerDatabase);
-        }
-        let used: u64 = databases.values().map(|entry| entry.reservation).sum();
-        if used
-            .checked_add(reservation)
-            .is_none_or(|total| total > self.limits.max_total_bytes)
-        {
-            return Err(AdmissionError::Total);
-        }
+        self.check_admission(&databases, name, reservation)?;
         let database = Database::in_memory().map_err(|_| AdmissionError::Unavailable)?;
         databases.insert(
             name.to_owned(),
@@ -118,6 +116,41 @@ impl Registry {
             },
         );
         Ok(())
+    }
+
+    pub fn load(
+        &self,
+        name: &str,
+        relative_path: impl AsRef<Path>,
+        estimated_bytes: Option<u64>,
+    ) -> Result<(), RegistryError> {
+        let path = resolve_existing_path(&self.data_root, relative_path)?;
+        let size = std::fs::metadata(&path)
+            .map_err(|error| ConfigError::InvalidPath(error.to_string()))?
+            .len();
+        let reservation =
+            estimated_bytes.unwrap_or(size.max(self.limits.new_database_reservation_bytes));
+        let mut databases = self.databases.lock().expect("registro disponible");
+        self.check_admission(&databases, name, reservation)?;
+        let database = Database::from_path(&path)?;
+        databases.insert(
+            name.to_owned(),
+            DatabaseEntry {
+                reservation,
+                database,
+            },
+        );
+        Ok(())
+    }
+
+    pub fn sync(&self, name: &str, relative_path: impl AsRef<Path>) -> Result<(), RegistryError> {
+        let path = resolve_destination_path(&self.data_root, relative_path)?;
+        self.database(name)?.sync(path).map_err(Into::into)
+    }
+
+    pub fn reject_partial_sync(&self, name: &str) -> Result<(), RegistryError> {
+        self.database(name)?;
+        Err(DatabaseError::Persistence.into())
     }
 
     pub fn close(&self, name: &str) -> Result<(), AdmissionError> {
@@ -176,6 +209,34 @@ impl Registry {
             max_total_bytes: self.limits.max_total_bytes,
             max_database_bytes: self.limits.max_database_bytes,
         }
+    }
+
+    fn check_admission(
+        &self,
+        databases: &HashMap<String, DatabaseEntry>,
+        name: &str,
+        reservation: u64,
+    ) -> Result<(), AdmissionError> {
+        if name.trim().is_empty() {
+            return Err(AdmissionError::EmptyName);
+        }
+        if databases.contains_key(name) {
+            return Err(AdmissionError::Duplicate);
+        }
+        if databases.len() >= self.limits.max_databases {
+            return Err(AdmissionError::MaximumDatabases);
+        }
+        if reservation > self.limits.max_database_bytes {
+            return Err(AdmissionError::PerDatabase);
+        }
+        let used: u64 = databases.values().map(|entry| entry.reservation).sum();
+        if used
+            .checked_add(reservation)
+            .is_none_or(|total| total > self.limits.max_total_bytes)
+        {
+            return Err(AdmissionError::Total);
+        }
+        Ok(())
     }
 
     fn database(&self, name: &str) -> Result<Database, RegistryError> {
