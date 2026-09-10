@@ -16,9 +16,12 @@
 # Artefactos .NET
 /clients/csharp/**/bin/
 /clients/csharp/**/obj/
+/tests/e2e/**/bin/
+/tests/e2e/**/obj/
 
 # Artefactos Python
 /clients/python/.pytest_cache/
 /clients/python/**/__pycache__/
 /clients/python/src/*.egg-info/
 /clients/python/.venv/
+/tests/e2e/**/__pycache__/

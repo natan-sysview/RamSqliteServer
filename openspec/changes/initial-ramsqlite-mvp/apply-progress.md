@@ -5,7 +5,7 @@
 **Modo:** Standard (`strict_tdd: false`)  
 **Estrategia:** `feature-branch-chain`  
 **Unidad actual:** PR 3 — clientes locales C# y Python
-**Progreso:** 12 de 16 tareas completadas
+**Progreso:** 13 de 16 tareas completadas
 
 ## Tareas completadas
 
@@ -21,6 +21,7 @@
 - [x] 2.5 Receptor TCP ejecutado como proceso real; dos clientes en procesos independientes usan dos bases nombradas sin mezclar datos.
 - [x] 3.1 Cliente C# TCP local, errores tipados y prueba de humo .NET contra el binario real del servidor.
 - [x] 3.2 Cliente Python TCP local, errores tipados y prueba de humo `pytest` contra el binario real del servidor.
+- [x] 3.3 Prueba E2E de procesos C# y Python sobre la misma base y bases aisladas; workflow CI para macOS, Linux y Windows.
 
 ## Evidencia RED exigida por las tareas
 
@@ -59,6 +60,11 @@
 | PR 3 — cliente Python | Harness de ejecución | La misma prueba compila el binario Rust real, lo inicia en un puerto TCP loopback temporal con una raíz temporal, crea la base `humo`, ejecuta DDL/DML/consulta parametrizada y recibe un error SQL tipado; la limpieza termina el proceso y elimina sus recursos temporales. Exit 0, 1 aprobada. |
 | PR 3 — cliente Python | Puertas de calidad | `cargo fmt --all -- --check` y `cargo clippy --workspace --all-targets -- -D warnings`: exit 0. `cargo test --workspace` y `git diff --check`: exit 0; 19 pruebas Rust aprobadas, 0 fallidas. Las pruebas loopback requieren ejecutarse fuera del sandbox de archivos para poder abrir sockets TCP locales. |
 | PR 3 — cliente Python | Reversión | Revertir `.gitignore` y eliminar `clients/python/`; retira el cliente y la prueba Python sin tocar el servidor Rust, el cliente C# ni las tareas E2E, CI o benchmarks. |
+| PR 3 — interoperabilidad y CI | Prueba enfocada | `clients/python/.venv/bin/python -m pytest tests/e2e`: exit 0, 2 aprobadas, 0 fallidas. |
+| PR 3 — interoperabilidad y CI | Harness de ejecución | La prueba inicia el binario Rust real con raíz temporal y loopback, ejecuta el escritor C# como proceso `dotnet run`, y usa el proceso Python de `pytest` para confirmar tanto la fila compartida como el aislamiento de `solo-csharp` y `solo-python`. Exit 0, 2 aprobadas. |
+| PR 3 — interoperabilidad y CI | Puertas de calidad | `cargo fmt --all -- --check` y `cargo clippy --workspace --all-targets -- -D warnings`: exit 0. `cargo test --workspace`: exit 0, 19 pruebas aprobadas. `dotnet test clients/csharp/tests/RamSqlite.Client.Tests/RamSqlite.Client.Tests.csproj`: exit 0, 1 aprobada. `clients/python/.venv/bin/python -m pytest clients/python/tests tests/e2e`: exit 0, 3 aprobadas. |
+| PR 3 — interoperabilidad y CI | CI | `.github/workflows/ci.yml` ejecuta las puertas Rust, C#, Python y E2E en `ubuntu-latest`, `macos-latest` y `windows-latest`. La matriz solo puede ejecutarse en GitHub Actions, no localmente. |
+| PR 3 — interoperabilidad y CI | Reversión | Revertir `.github/workflows/ci.yml`, las reglas E2E de `.gitignore` y eliminar `tests/e2e/`; retira el harness y CI sin modificar el servidor ni los clientes publicados. |
 
 ## Límite de revisión
 
