@@ -44,7 +44,7 @@ Chain strategy: feature-branch-chain
 ## Fase 3: Clientes y portabilidad
 
 - [x] 3.1 Crear `clients/csharp/` con cliente TCP, errores tipados y prueba de humo .NET contra servidor local.
-- [ ] 3.2 Crear `clients/python/` con cliente TCP, errores tipados y prueba de humo `pytest`.
+- [x] 3.2 Crear `clients/python/` con cliente TCP, errores tipados y prueba de humo `pytest`.
 - [ ] 3.3 Añadir `tests/e2e/` para C# y Python sobre misma/distinta base; ejecutar la matriz macOS/Linux/Windows en CI.
 
 ## Fase 4: Evidencia y contrato

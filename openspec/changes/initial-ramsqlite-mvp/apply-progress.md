@@ -4,8 +4,8 @@
 
 **Modo:** Standard (`strict_tdd: false`)  
 **Estrategia:** `feature-branch-chain`  
-**Unidad actual:** PR 3 — cliente C# local
-**Progreso:** 11 de 16 tareas completadas
+**Unidad actual:** PR 3 — clientes locales C# y Python
+**Progreso:** 12 de 16 tareas completadas
 
 ## Tareas completadas
 
@@ -20,6 +20,7 @@
 - [x] 2.4 Carga SQLite y sincronización completa explícita mediante SQLite Backup API, sin persistencia automática.
 - [x] 2.5 Receptor TCP ejecutado como proceso real; dos clientes en procesos independientes usan dos bases nombradas sin mezclar datos.
 - [x] 3.1 Cliente C# TCP local, errores tipados y prueba de humo .NET contra el binario real del servidor.
+- [x] 3.2 Cliente Python TCP local, errores tipados y prueba de humo `pytest` contra el binario real del servidor.
 
 ## Evidencia RED exigida por las tareas
 
@@ -54,6 +55,10 @@
 | PR 3 — cliente C# | Harness de ejecución | La misma prueba compila el binario Rust real, lo inicia en un puerto TCP loopback temporal con una raíz temporal, crea la base `humo`, ejecuta DDL/DML/consulta parametrizada y recibe un error SQL tipado; la finalización mata el proceso y borra la raíz temporal. Exit 0, 1 aprobada. |
 | PR 3 — cliente C# | Puertas de calidad | `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings` y `cargo test --workspace`: exit 0; 19 pruebas Rust aprobadas, 0 fallidas. Las pruebas loopback requieren ejecutarse fuera del sandbox de archivos para poder abrir sockets TCP locales. |
 | PR 3 — cliente C# | Reversión | Revertir `.gitignore` y eliminar `clients/csharp/`; retira el cliente y la prueba C# sin tocar el servidor Rust ni las tareas de Python, CI o benchmarks. |
+| PR 3 — cliente Python | Prueba enfocada | `clients/python/.venv/bin/python -m pytest clients/python/tests`: exit 0, 1 aprobada, 0 fallidas. |
+| PR 3 — cliente Python | Harness de ejecución | La misma prueba compila el binario Rust real, lo inicia en un puerto TCP loopback temporal con una raíz temporal, crea la base `humo`, ejecuta DDL/DML/consulta parametrizada y recibe un error SQL tipado; la limpieza termina el proceso y elimina sus recursos temporales. Exit 0, 1 aprobada. |
+| PR 3 — cliente Python | Puertas de calidad | `cargo fmt --all -- --check` y `cargo clippy --workspace --all-targets -- -D warnings`: exit 0. `cargo test --workspace` y `git diff --check`: exit 0; 19 pruebas Rust aprobadas, 0 fallidas. Las pruebas loopback requieren ejecutarse fuera del sandbox de archivos para poder abrir sockets TCP locales. |
+| PR 3 — cliente Python | Reversión | Revertir `.gitignore` y eliminar `clients/python/`; retira el cliente y la prueba Python sin tocar el servidor Rust, el cliente C# ni las tareas E2E, CI o benchmarks. |
 
 ## Límite de revisión
 
@@ -67,4 +72,4 @@ Ninguna desviación funcional. El protocolo expone valores de parámetros como v
 
 ## Pendiente
 
-Tareas 3.2–4.3.
+Tareas 3.3–4.3.
