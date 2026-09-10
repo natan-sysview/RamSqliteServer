@@ -49,6 +49,6 @@ Chain strategy: feature-branch-chain
 
 ## Fase 4: Evidencia y contrato
 
-- [ ] 4.1 Crear `benchmarks/` con datos/cargas versionadas para RamSQLite, `:memory:` y WAL, incluidas escrituras y múltiples bases.
+- [x] 4.1 Crear `benchmarks/` con datos/cargas versionadas para RamSQLite, `:memory:` y WAL, incluidas escrituras y múltiples bases.
 - [ ] 4.2 Registrar latencia, rendimiento, errores, entorno, límites y conclusión continuar/pivotar/detener en resultados reproducibles.
 - [ ] 4.3 Documentar `docs/protocolo-local.md`: mensajes, parámetros, errores, raíz de archivos, un escritor y límites del MVP.

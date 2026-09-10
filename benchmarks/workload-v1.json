@@ -1,0 +1,8 @@
+{
+  "version": "v1",
+  "worker_count": 2,
+  "named_databases": ["ventas", "inventario"],
+  "seed_rows_per_database": 100,
+  "query_operations_per_worker": 20,
+  "write_operations_per_worker": 10
+}

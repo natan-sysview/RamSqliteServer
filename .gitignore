@@ -24,4 +24,7 @@
 /clients/python/**/__pycache__/
 /clients/python/src/*.egg-info/
 /clients/python/.venv/
+
+# Artefactos Python de benchmarks
+/benchmarks/**/__pycache__/
 /tests/e2e/**/__pycache__/

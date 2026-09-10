@@ -4,8 +4,8 @@
 
 **Modo:** Standard (`strict_tdd: false`)  
 **Estrategia:** `feature-branch-chain`  
-**Unidad actual:** PR 3 — clientes locales C# y Python
-**Progreso:** 13 de 16 tareas completadas
+**Unidad actual:** PR 4 — comparadores reproducibles
+**Progreso:** 14 de 16 tareas completadas
 
 ## Tareas completadas
 
@@ -22,6 +22,7 @@
 - [x] 3.1 Cliente C# TCP local, errores tipados y prueba de humo .NET contra el binario real del servidor.
 - [x] 3.2 Cliente Python TCP local, errores tipados y prueba de humo `pytest` contra el binario real del servidor.
 - [x] 3.3 Prueba E2E de procesos C# y Python sobre la misma base y bases aisladas; workflow CI para macOS, Linux y Windows.
+- [x] 4.1 Cargas versionadas y runner multiproceso para comparar RamSQLite, SQLite `:memory:` y SQLite con WAL.
 
 ## Evidencia RED exigida por las tareas
 
@@ -65,6 +66,9 @@
 | PR 3 — interoperabilidad y CI | Puertas de calidad | `cargo fmt --all -- --check` y `cargo clippy --workspace --all-targets -- -D warnings`: exit 0. `cargo test --workspace`: exit 0, 19 pruebas aprobadas. `dotnet test clients/csharp/tests/RamSqlite.Client.Tests/RamSqlite.Client.Tests.csproj`: exit 0, 1 aprobada. `clients/python/.venv/bin/python -m pytest clients/python/tests tests/e2e`: exit 0, 3 aprobadas. |
 | PR 3 — interoperabilidad y CI | CI | `.github/workflows/ci.yml` ejecuta las puertas Rust, C#, Python y E2E en `ubuntu-latest`, `macos-latest` y `windows-latest`. La matriz solo puede ejecutarse en GitHub Actions, no localmente. |
 | PR 3 — interoperabilidad y CI | Reversión | Revertir `.github/workflows/ci.yml`, las reglas E2E de `.gitignore` y eliminar `tests/e2e/`; retira el harness y CI sin modificar el servidor ni los clientes publicados. |
+| PR 4 — comparadores | Prueba enfocada | `clients/python/.venv/bin/python -m pytest benchmarks/tests`: exit 0, 2 aprobadas, 0 fallidas; valida la carga `v1` y rechaza bases nombradas duplicadas. |
+| PR 4 — comparadores | Harness de ejecución | `clients/python/.venv/bin/python benchmarks/run.py --results /tmp/ramsqlite-v1-results.json`: exit 0; construye la carga con dos procesos, `ventas` e `inventario`, consultas y escrituras, y ejecuta el binario real contra RamSQLite, SQLite `:memory:` y SQLite WAL; los tres comparadores terminaron 120 operaciones sin errores. |
+| PR 4 — comparadores | Reversión | Revertir `benchmarks/`; elimina el runner y las cargas versionadas sin modificar el servidor, clientes ni documentación del protocolo. |
 
 ## Límite de revisión
 
@@ -78,4 +82,4 @@ Ninguna desviación funcional. El protocolo expone valores de parámetros como v
 
 ## Pendiente
 
-Tareas 3.3–4.3.
+Tareas 4.2–4.3.
