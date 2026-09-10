@@ -4,8 +4,8 @@
 
 **Modo:** Standard (`strict_tdd: false`)  
 **Estrategia:** `feature-branch-chain`  
-**Unidad actual:** PR 2 — motor SQL en RAM
-**Progreso:** 10 de 16 tareas completadas
+**Unidad actual:** PR 3 — cliente C# local
+**Progreso:** 11 de 16 tareas completadas
 
 ## Tareas completadas
 
@@ -19,6 +19,7 @@
 - [x] 2.3 Pruebas de integración TCP para archivo SQLite inválido, fallo de sincronización y solicitud parcial no compatible.
 - [x] 2.4 Carga SQLite y sincronización completa explícita mediante SQLite Backup API, sin persistencia automática.
 - [x] 2.5 Receptor TCP ejecutado como proceso real; dos clientes en procesos independientes usan dos bases nombradas sin mezclar datos.
+- [x] 3.1 Cliente C# TCP local, errores tipados y prueba de humo .NET contra el binario real del servidor.
 
 ## Evidencia RED exigida por las tareas
 
@@ -49,6 +50,10 @@
 | PR 2 — ciclo multiproceso | Harness de ejecución | `cargo test -p ramsqlite-server --test multiprocess_runtime`: exit 0; inicia `ramsqlite-server` como proceso hijo con raíz temporal y loopback, luego inicia dos procesos cliente que crean, escriben y verifican `ventas` e `inventario` sin mezclar filas. |
 | PR 2 — ciclo multiproceso | Puertas de calidad | `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace` y `git diff --check`: exit 0; 19 pruebas de integración aprobadas, 0 fallidas. |
 | PR 2 — ciclo multiproceso | Reversión | Revertir `server/src/main.rs` y `server/tests/multiprocess_runtime.rs`; elimina la configuración de prueba por entorno y el harness de procesos sin modificar el motor SQLite, protocolo ni persistencia. |
+| PR 3 — cliente C# | Prueba enfocada | `dotnet test clients/csharp/tests/RamSqlite.Client.Tests/RamSqlite.Client.Tests.csproj`: exit 0, 1 aprobada, 0 fallidas. |
+| PR 3 — cliente C# | Harness de ejecución | La misma prueba compila el binario Rust real, lo inicia en un puerto TCP loopback temporal con una raíz temporal, crea la base `humo`, ejecuta DDL/DML/consulta parametrizada y recibe un error SQL tipado; la finalización mata el proceso y borra la raíz temporal. Exit 0, 1 aprobada. |
+| PR 3 — cliente C# | Puertas de calidad | `cargo fmt --all -- --check`, `cargo clippy --workspace --all-targets -- -D warnings` y `cargo test --workspace`: exit 0; 19 pruebas Rust aprobadas, 0 fallidas. Las pruebas loopback requieren ejecutarse fuera del sandbox de archivos para poder abrir sockets TCP locales. |
+| PR 3 — cliente C# | Reversión | Revertir `.gitignore` y eliminar `clients/csharp/`; retira el cliente y la prueba C# sin tocar el servidor Rust ni las tareas de Python, CI o benchmarks. |
 
 ## Límite de revisión
 
@@ -62,4 +67,4 @@ Ninguna desviación funcional. El protocolo expone valores de parámetros como v
 
 ## Pendiente
 
-Tareas 3.1–4.3.
+Tareas 3.2–4.3.

@@ -12,3 +12,7 @@
 
 # Artefactos locales de análisis estático
 /.scannerwork/
+
+# Artefactos .NET
+/clients/csharp/**/bin/
+/clients/csharp/**/obj/
